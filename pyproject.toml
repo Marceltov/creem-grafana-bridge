@@ -1,6 +1,6 @@
 [project]
 name = "creem-grafana-bridge"
-version = "0.1.0"
+version = "0.1.1"
 description = "Revenue, cashflow, forecast and payout series from Creem stores, for Grafana"
 license = "MIT"
 requires-python = ">=3.13"

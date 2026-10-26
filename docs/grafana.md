@@ -23,7 +23,7 @@ datasources:
 
 `examples/grafana/dashboards/revenue.json` (uid `revenue`) expects the data source above. It has:
 
-- **Tiles:** revenue this month, cash in this month, expected in the next 30 days, 90 days and 12 months, the next payout.
+- **Tiles:** revenue this month, cash in this month, expected in the next 30 days, 90 days and 12 months (from the start of today), the next payout with its date.
 - **Revenue per month** and **cashflow per month**, stacked by plan.
 - **Expected payments per month**, by store, and **estimated payouts**.
 - **Amounts** (net or gross) and **Store** at the top. The time range runs from 12 months back to 12 months ahead, so the past and the forecast share one axis.

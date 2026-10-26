@@ -96,3 +96,36 @@ def test_prices_without_vat_are_named_not_guessed():
     s["product"]["tax_mode"] = "exclusive"
     with pytest.raises(ValueError, match="exclusive"):
         forecast(store(s), NOW, "gross", F, BERLIN)
+
+
+def test_month_end_is_clamped_without_drift():
+    rows = forecast(store(sub(next_at="2027-01-31T10:00:00Z")), NOW, "gross", F, BERLIN, months=6)
+    assert [r["time"][:10] for r in rows] == ["2027-01-31", "2027-02-28", "2027-03-31"]
+
+
+def test_dates_keep_their_day_across_the_clock_change():
+    rows = forecast(store(sub(next_at="2027-03-28T10:00:00Z")), NOW, "gross", F, BERLIN, months=7)
+    assert [r["time"] for r in rows[:2]] == ["2027-03-28T00:00:00+01:00", "2027-04-28T00:00:00+02:00"]
+
+
+def test_forever_and_fixed_discounts():
+    forever = {"type": "percentage", "amount": 50, "duration": "forever"}
+    assert {r["amount"] for r in forecast(store(sub(price=1990, discount=forever)), NOW, "gross", F, BERLIN)} == {Decimal("9.95")}
+    fixed = {"type": "fixed", "amount": 500, "duration": "forever"}
+    assert {r["amount"] for r in forecast(store(sub(price=1990, discount=fixed)), NOW, "gross", F, BERLIN)} == {Decimal("14.90")}
+
+
+def test_once_discount_is_used_by_the_first_payment():
+    once = {"type": "percentage", "amount": 50, "duration": "once"}
+    # active: the first payment already took it
+    assert forecast(store(sub(price=1990, discount=once)), NOW, "gross", F, BERLIN)[0]["amount"] == Decimal("19.90")
+    # trialing: the first payment is still to come and takes it
+    rows = forecast(store(sub(price=1990, discount=once, status="trialing", last=(0, 0))), NOW, "gross", F, BERLIN)
+    assert [r["amount"] for r in rows[:2]] == [Decimal("9.95"), Decimal("19.90")]
+
+
+def test_repeating_discount_of_a_trial_counts_from_the_first_payment():
+    d = {"type": "percentage", "amount": 20, "duration": "repeating", "durationInMonths": 2}
+    s = sub(price=1990, discount=d, status="trialing", created="2026-10-14T15:29:07Z", last=(0, 0))
+    rows = forecast(store(s), NOW, "gross", F, BERLIN)
+    assert [r["amount"] for r in rows[:3]] == [Decimal("15.92"), Decimal("15.92"), Decimal("19.90")]

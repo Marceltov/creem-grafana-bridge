@@ -201,3 +201,40 @@ def test_currency_keeps_one_currency(serve):
     assert sorted(r["currency"] for r in rows) == []  # both refunded: nothing kept
     _, rows = get(base + "/series?kind=cashflow&basis=net&by=total&store=notefeed&currency=USD")
     assert [r["currency"] for r in rows] == ["USD"]
+
+
+def test_from_start_of_today_keeps_a_payment_due_later_today(serve):
+    def load(name, key, base_url):
+        return StoreData(name, [], [{
+            "id": "s", "status": "active", "canceled_at": None, "created_at": "2026-09-26T15:00:00Z",
+            "next_transaction_date": "2026-10-26T15:00:00Z", "discount": None,
+            "product": {"name": "m", "price": 100, "currency": "EUR", "recurring_interval": "month", "recurring_interval_count": 1},
+            "last_transaction": {"amount_paid": 100, "tax_amount": 0}}])
+
+    base = serve(load)
+    q = "/series?kind=forecast&basis=gross&by=total&store=notefeed&to=now%2B1d"
+    assert get(base + q + "&from=now")[1] == []
+    assert [r["time"] for r in get(base + q + "&from=now/d")[1]] == ["2026-10-26T00:00:00+01:00"]
+
+
+def test_token_needs_the_bearer_scheme(serve):
+    req = Request(serve(stores) + "/series?kind=revenue", headers={"Authorization": "t"})
+    with pytest.raises(HTTPError) as e:
+        urlopen(req)
+    assert e.value.code == 401
+
+
+def test_total_keeps_currencies_apart(serve):
+    def load(name, key, base_url):
+        d = live()
+        t = {**d.transactions[1], "status": "paid", "refunded_amount": None}
+        return StoreData(name, [t, {**t, "id": "t2", "currency": "USD"}], d.subscriptions)
+
+    _, rows = get(serve(load) + "/series?kind=cashflow&basis=gross&by=total&store=notefeed")
+    assert sorted((r["currency"], r["amount"]) for r in rows) == [("EUR", 1.99), ("USD", 1.99)]
+
+
+@pytest.mark.parametrize("var,value", [("FEE_PERCENT", "abc"), ("TZ", "Mars/Base"), ("PORT", "x"), ("PAYOUT_HOLD_DAYS", "1.5")])
+def test_bad_setting_names_the_variable(var, value):
+    with pytest.raises(ValueError, match=var):
+        Config.from_env({**ENV, var: value})

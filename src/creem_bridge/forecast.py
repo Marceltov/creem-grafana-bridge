@@ -36,17 +36,20 @@ def add_months(t: datetime, n: int) -> datetime:
     return t.replace(year=year, month=month, day=min(t.day, last))
 
 
-def _price(sub: dict, when: datetime) -> Decimal:
+def _price(sub: dict, when: datetime, first: datetime) -> Decimal:
+    """What the payment at `when` will be. `first` is the subscription's next payment date. A subscription still in its
+    trial has not paid yet: its discount starts with that first payment; otherwise it started when it was created."""
     units = sum(int(i.get("units") or 1) for i in sub.get("items") or []) or 1
     price = Decimal(sub["product"]["price"]) * units / 100
     d = sub.get("discount")
     if not d:
         return price
-    created = _at(sub["created_at"])
+    trial = sub["status"] == "trialing"
+    start = first if trial else _at(sub["created_at"])
     runs = {
         "forever": True,
-        "once": False,  # the first payment, already made
-        "repeating": when < add_months(created, int(d.get("durationInMonths") or 0)),
+        "once": trial and when == first,
+        "repeating": when < add_months(start, int(d.get("durationInMonths") or 0)),
     }.get(d.get("duration"), False)
     if not runs:
         return price
@@ -86,7 +89,7 @@ def forecast(data: list[StoreData], now: datetime, basis: str, fees: Fees, tz: Z
                 k += 1
                 if when < now:
                     continue
-                gross = _price(sub, when)
+                gross = _price(sub, when, first)
                 tax = (gross * share).quantize(CENT, ROUND_HALF_UP)
                 p = Payment(store.store, product["name"], product["currency"], gross, tax, Decimal(0), when, when, when, None)
                 day = when.astimezone(tz).replace(hour=0, minute=0, second=0, microsecond=0)

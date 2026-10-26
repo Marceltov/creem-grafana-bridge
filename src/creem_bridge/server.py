@@ -25,23 +25,27 @@ KINDS = ("revenue", "cashflow", "forecast", "payouts")
 BASES = ("gross", "net")
 GROUPS = ("plan", "store", "total")
 PERIODS = ("date", "month")
-RELATIVE = re.compile(r"now(?:([+-])(\d+)([dM]))?(/M)?")
+RELATIVE = re.compile(r"now(?:([+-])(\d+)([dM]))?(?:/([dM]))?")
 
 
 def instant(value: str, now: datetime, tz: ZoneInfo) -> datetime:
     """Epoch milliseconds, as Grafana's ${__from} and ${__to}, or Grafana-style `now`, `now-30d`, `now+1M/M` (/M: the
-    start of that month)."""
+    start of that month, /d: the start of that day)."""
     if value.isdigit():
         return datetime.fromtimestamp(int(value) / 1000, UTC)
     m = RELATIVE.fullmatch(value)
     if not m:
         raise ValueError(value)
-    sign, n, unit, to_month = m.groups()
+    sign, n, unit, round_to = m.groups()
     t = now
     if n:
         k = int(n) * (1 if sign == "+" else -1)
         t = add_months(t, k) if unit == "M" else t + timedelta(days=k)
-    return month_start(t, tz) if to_month else t
+    if round_to == "M":
+        return month_start(t, tz)
+    if round_to == "d":
+        return t.astimezone(tz).replace(hour=0, minute=0, second=0, microsecond=0)
+    return t
 
 
 def regroup(rows: list[dict], by: str, per: str, tz: ZoneInfo) -> list[dict]:
@@ -109,8 +113,8 @@ def make_server(cfg: Config, load: Callable[[str, str, str], StoreData] = load_s
                 return self.send(200, "ok", "text/plain")
             if url.path not in ("/series", "/stores"):
                 return self.send(404, {"error": "not found"})
-            given = self.headers.get("Authorization", "").removeprefix("Bearer ")
-            if not hmac.compare_digest(given.encode(), cfg.token.encode()):
+            given = self.headers.get("Authorization", "")
+            if not hmac.compare_digest(given.encode(), f"Bearer {cfg.token}".encode()):
                 return self.send(401, {"error": "unauthorized"})
             if url.path == "/stores":
                 return self.send(200, list(cfg.stores))
@@ -122,7 +126,7 @@ def make_server(cfg: Config, load: Callable[[str, str, str], StoreData] = load_s
                 start = instant(q["from"], now(), cfg.tz) if q.get("from") else None
                 end = instant(q["to"], now(), cfg.tz) if q.get("to") else None
             except ValueError:
-                return self.send(400, {"error": "from and to are epoch milliseconds or now, now-30d, now+1M/M"})
+                return self.send(400, {"error": "from and to are epoch milliseconds or now, now-30d, now+1M/M, now/d"})
             if kind not in KINDS or basis not in BASES or by not in GROUPS or per not in PERIODS or any(n not in cfg.stores for n in names):
                 return self.send(400, {"error": f"kind is one of {KINDS}, basis one of {BASES}, by one of {GROUPS}, per one of {PERIODS}, store any of {list(cfg.stores)}"})
             try:
