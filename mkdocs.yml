@@ -1,6 +1,6 @@
 site_name: creem-grafana-bridge
 site_description: Revenue, cashflow, a forecast and estimated payouts of your Creem stores, as series for Grafana.
-site_url: https://marceltov.github.io/creem-grafana-bridge/
+site_url: https://creem-grafana-bridge.marceltov.de/
 repo_url: https://github.com/Marceltov/creem-grafana-bridge
 repo_name: Marceltov/creem-grafana-bridge
 edit_uri: edit/main/docs/
