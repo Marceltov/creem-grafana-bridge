@@ -262,7 +262,7 @@
           "source": "url",
           "parser": "backend",
           "format": "timeseries",
-          "url": "/series?kind=forecast&basis=$basis&store=${store:csv}&from=now&to=now%2B30d&by=total&currency=EUR",
+          "url": "/series?kind=forecast&basis=$basis&store=${store:csv}&from=now/d&to=now%2B30d&by=total&currency=EUR",
           "url_options": {
             "method": "GET",
             "data": ""
@@ -340,7 +340,7 @@
           "source": "url",
           "parser": "backend",
           "format": "timeseries",
-          "url": "/series?kind=forecast&basis=$basis&store=${store:csv}&from=now&to=now%2B90d&by=total&currency=EUR",
+          "url": "/series?kind=forecast&basis=$basis&store=${store:csv}&from=now/d&to=now%2B90d&by=total&currency=EUR",
           "url_options": {
             "method": "GET",
             "data": ""
@@ -418,7 +418,7 @@
           "source": "url",
           "parser": "backend",
           "format": "timeseries",
-          "url": "/series?kind=forecast&basis=$basis&store=${store:csv}&from=now&to=now%2B12M&by=total&currency=EUR",
+          "url": "/series?kind=forecast&basis=$basis&store=${store:csv}&from=now/d&to=now%2B12M&by=total&currency=EUR",
           "url_options": {
             "method": "GET",
             "data": ""
@@ -495,8 +495,8 @@
           "type": "json",
           "source": "url",
           "parser": "backend",
-          "format": "timeseries",
-          "url": "/series?kind=payouts&basis=net&store=${store:csv}&from=now&to=now%2B3M&by=total&currency=EUR",
+          "format": "table",
+          "url": "/series?kind=payouts&basis=net&store=${store:csv}&from=now/d&to=now%2B3M&by=total&currency=EUR",
           "url_options": {
             "method": "GET",
             "data": ""
@@ -505,18 +505,13 @@
           "columns": [
             {
               "selector": "time",
-              "text": "time",
+              "text": "date",
               "type": "timestamp"
             },
             {
               "selector": "amount",
               "text": "amount",
               "type": "number"
-            },
-            {
-              "selector": "store",
-              "text": "total",
-              "type": "string"
             }
           ],
           "filters": []
@@ -532,7 +527,7 @@
         "defaults": {
           "unit": "currencyEUR",
           "decimals": 2,
-          "noValue": "\u20ac0.00",
+          "noValue": "None yet",
           "color": {
             "mode": "fixed",
             "fixedColor": "text"
@@ -550,9 +545,45 @@
         },
         "graphMode": "none",
         "colorMode": "none",
-        "textMode": "value",
+        "textMode": "value_and_name",
         "justifyMode": "center"
-      }
+      },
+      "transformations": [
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "date",
+                "destinationType": "string",
+                "dateFormat": "D MMM YYYY"
+              }
+            ],
+            "fields": {}
+          }
+        },
+        {
+          "id": "limit",
+          "options": {
+            "limitField": 1
+          }
+        },
+        {
+          "id": "rowsToFields",
+          "options": {
+            "mappings": [
+              {
+                "fieldName": "date",
+                "handlerKey": "field.name"
+              },
+              {
+                "fieldName": "amount",
+                "handlerKey": "field.value"
+              }
+            ]
+          }
+        }
+      ]
     },
     {
       "id": 7,
