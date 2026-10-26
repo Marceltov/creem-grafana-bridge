@@ -9,7 +9,7 @@ from urllib.request import Request, urlopen
 
 PAGE_SIZE = 100
 # Creem answers urllib's default user agent with 403.
-USER_AGENT = "creem-grafana-bridge/0.1.0"
+USER_AGENT = "creem-grafana-bridge/0.1.1"
 
 Get = Callable[[str, dict[str, str]], dict]
 
