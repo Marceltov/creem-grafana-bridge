@@ -82,3 +82,17 @@ def test_unknown_interval_is_named():
     import pytest
     with pytest.raises(ValueError, match="week"):
         forecast(store(sub(interval="week")), NOW, "gross", F, BERLIN)
+
+
+def test_units_multiply_the_price():
+    s = sub(price=1000)
+    s["items"] = [{"units": 5}]
+    assert forecast(store(s), NOW, "gross", F, BERLIN)[0]["amount"] == Decimal("50.00")
+
+
+def test_prices_without_vat_are_named_not_guessed():
+    import pytest
+    s = sub()
+    s["product"]["tax_mode"] = "exclusive"
+    with pytest.raises(ValueError, match="exclusive"):
+        forecast(store(s), NOW, "gross", F, BERLIN)

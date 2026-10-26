@@ -24,7 +24,7 @@ months in `TZ`. Currencies are never added together. No customer data appears in
 
 Optional: `by=plan` (default), `store` or `total` sums the plans (and stores) into `all`; `from` and `to` keep rows
 with `from` ≤ time < `to`, as epoch milliseconds (Grafana's `${__from}`, `${__to}`) or relative: `now`, `now-30d`,
-`now+12M`, `now/M` (the start of this month), `now+1M/M`. `per=month` sums the forecast's and the payouts' dates into months. `GET /stores` lists the configured stores, for a Grafana
+`now+12M`, `now/M` (the start of this month), `now+1M/M`. `currency=EUR` keeps one currency (Grafana adds up whatever it gets, so a panel should ask for one). `per=month` sums the forecast's and the payouts' dates into months. `GET /stores` lists the configured stores, for a Grafana
 variable.
 
 `GET /health` answers `ok` without a token. If any store cannot be read, `/series` answers 502 naming the store rather

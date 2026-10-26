@@ -64,25 +64,25 @@ class StoreFailed(Exception):
 def make_server(cfg: Config, load: Callable[[str, str, str], StoreData] = load_store,
                 now: Callable[[], datetime] = lambda: datetime.now(UTC)) -> ThreadingHTTPServer:
     cache: dict[str, tuple[float, StoreData]] = {}
-    lock = threading.Lock()
+    # One lock per store, held while it is fetched: the dashboard's panels ask at once, and Creem is asked once.
+    locks = {name: threading.Lock() for name in cfg.stores}
 
     def store_data(name: str) -> StoreData:
-        with lock:
+        with locks[name]:
             hit = cache.get(name)
             if hit and time.monotonic() - hit[0] < cfg.cache_seconds:
                 return hit[1]
-        try:
-            data = load(name, cfg.stores[name], cfg.base_url)
-        except CreemError as e:
-            raise StoreFailed(f"store {name}: {e}") from None
-        with lock:
+            try:
+                data = load(name, cfg.stores[name], cfg.base_url)
+            except Exception as e:  # any failure, so no answer leaves a store out without saying which
+                raise StoreFailed(f"store {name}: {e}") from None
             cache[name] = (time.monotonic(), data)
-        return data
+            return data
 
     def series(kind: str, basis: str, names: list[str]) -> list[dict]:
         data = [store_data(n) for n in names]
-        ps = [p for d in data for p in payments(d)]
         try:
+            ps = [p for d in data for p in payments(d)]
             if kind == "revenue":
                 return revenue(ps, basis, cfg.fees, cfg.tz)
             if kind == "cashflow":
@@ -91,7 +91,7 @@ def make_server(cfg: Config, load: Callable[[str, str, str], StoreData] = load_s
                 return forecast(data, now(), basis, cfg.fees, cfg.tz, cfg.months)
             # Payouts are always after fees; `basis` does not apply.
             return payouts(ps, forecast(data, now(), "net", cfg.fees, cfg.tz, cfg.months), cfg.payouts, cfg.fees, cfg.tz)
-        except ValueError as e:
+        except Exception as e:
             raise StoreFailed(str(e)) from None
 
     class Handler(BaseHTTPRequestHandler):
@@ -129,7 +129,8 @@ def make_server(cfg: Config, load: Callable[[str, str, str], StoreData] = load_s
                 rows = series(kind, basis, names)
             except StoreFailed as e:
                 return self.send(502, {"error": str(e)})
-            rows = [r for r in rows if (start is None or datetime.fromisoformat(r["time"]) >= start)
+            currency = q.get("currency")
+            rows = [r for r in rows if (currency is None or r["currency"] == currency) and (start is None or datetime.fromisoformat(r["time"]) >= start)
                     and (end is None or datetime.fromisoformat(r["time"]) < end)]
             self.send(200, [{**r, "amount": float(r["amount"])} for r in regroup(rows, by, per, cfg.tz)])
 

@@ -40,3 +40,21 @@ def test_payments_from_creem_json():
     assert yearly.paid_at.tzinfo is not None
     assert {f.name for f in fields(Payment)} == {
         "store", "plan", "currency", "paid", "tax", "refunded", "period_start", "period_end", "paid_at", "refunded_at"}
+
+
+def _tx(status):
+    return {"id": "t", "amount": 199, "amount_paid": 199, "currency": "EUR", "tax_amount": 32, "status": status,
+            "refunded_amount": None, "subscription": None, "period_start": 1792596547051, "period_end": 1795274947051,
+            "created_at": 1792596548688}
+
+
+def test_unknown_payment_status_is_named_not_dropped():
+    import pytest
+    from creem_bridge.creem import StoreData
+    with pytest.raises(ValueError, match="chargeback"):
+        payments(StoreData("notefeed", [_tx("chargeback")], []))
+
+
+def test_payments_that_did_not_happen_are_left_out():
+    from creem_bridge.creem import StoreData
+    assert payments(StoreData("notefeed", [_tx("pending"), _tx("failed")], [])) == []

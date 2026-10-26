@@ -8,6 +8,8 @@ from .creem import StoreData
 
 CENT = Decimal("0.01")
 PAID = {"paid", "refunded", "partially_refunded"}
+# Statuses of payments that did not happen. Any other status is an error, not a payment left out of every total.
+NOT_PAID = {"pending", "failed", "void", "canceled", "cancelled", "expired", "uncollectible", "open", "draft"}
 # A payment Creem cannot tie to a subscription: a one-time product.
 ONE_TIME = "one-time"
 
@@ -46,8 +48,10 @@ def payments(data: StoreData) -> list[Payment]:
     plans = {s["id"]: s["product"]["name"] for s in data.subscriptions}
     out = []
     for t in data.transactions:
-        if t["status"] not in PAID:
+        if t["status"] in NOT_PAID:
             continue
+        if t["status"] not in PAID:
+            raise ValueError(f"store {data.store}: payment status {t['status']!r} is not known yet")
         paid_at = _time(t["created_at"])
         out.append(Payment(
             store=data.store,

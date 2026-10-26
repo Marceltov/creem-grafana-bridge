@@ -37,7 +37,8 @@ def add_months(t: datetime, n: int) -> datetime:
 
 
 def _price(sub: dict, when: datetime) -> Decimal:
-    price = Decimal(sub["product"]["price"]) / 100
+    units = sum(int(i.get("units") or 1) for i in sub.get("items") or []) or 1
+    price = Decimal(sub["product"]["price"]) * units / 100
     d = sub.get("discount")
     if not d:
         return price
@@ -77,6 +78,8 @@ def forecast(data: list[StoreData], now: datetime, basis: str, fees: Fees, tz: Z
             product = sub["product"]
             if product["recurring_interval"] not in MONTHS_PER:
                 raise ValueError(f"store {store.store}: billing every {product['recurring_interval']!r} is not supported yet")
+            if product.get("tax_mode", "inclusive") != "inclusive":
+                raise ValueError(f"store {store.store}: prices with tax_mode {product['tax_mode']!r} are not supported yet")
             step = MONTHS_PER[product["recurring_interval"]] * int(product.get("recurring_interval_count") or 1)
             first, share, k = _at(sub["next_transaction_date"]), _vat_share(sub, fallback), 0
             while (when := add_months(first, k * step)) <= until:

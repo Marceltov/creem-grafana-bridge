@@ -151,3 +151,53 @@ def test_per_month_sums_dates_into_months(serve):
     # one subscription in each of two stores: two payments per month, in November and December
     assert [(r["time"], r["amount"]) for r in rows] == [("2026-11-01T00:00:00+01:00", 2.0), ("2026-12-01T00:00:00+01:00", 2.0)]
     assert get(base + "/series?kind=forecast&basis=gross&per=week")[0] == 400
+
+
+def test_any_store_failure_names_the_store(serve):
+    def load(name, key, base_url):
+        if name == "b":
+            raise TimeoutError("read timed out")
+        return live()
+
+    status, body = get(serve(load) + "/series?kind=revenue&basis=gross")
+    assert status == 502 and body["error"].startswith("store b:")
+
+
+def test_parallel_requests_ask_creem_once(serve):
+    import time as _time
+    from concurrent.futures import ThreadPoolExecutor
+    calls = []
+
+    def load(name, key, base_url):
+        calls.append(name)
+        _time.sleep(0.2)
+        return StoreData(name, [], [])
+
+    base = serve(load)
+    with ThreadPoolExecutor(8) as pool:
+        list(pool.map(lambda _: get(base + "/series?kind=revenue&basis=gross"), range(8)))
+    assert sorted(calls) == ["b", "notefeed"]
+
+
+def test_unknown_payment_status_is_502_naming_the_store(serve):
+    def load(name, key, base_url):
+        d = live()
+        d.transactions[0] = {**d.transactions[0], "status": "chargeback"}
+        return StoreData(name, d.transactions, d.subscriptions)
+
+    status, body = get(serve(load) + "/series?kind=cashflow&basis=gross&store=b")
+    assert status == 502 and "store b" in body["error"] and "chargeback" in body["error"]
+
+
+def test_currency_keeps_one_currency(serve):
+    def load(name, key, base_url):
+        d = live()
+        t = d.transactions[1]
+        usd = {**t, "id": "t2", "currency": "USD"}
+        return StoreData(name, [t, usd], d.subscriptions)
+
+    base = serve(load)
+    _, rows = get(base + "/series?kind=cashflow&basis=gross&by=total&store=notefeed")
+    assert sorted(r["currency"] for r in rows) == []  # both refunded: nothing kept
+    _, rows = get(base + "/series?kind=cashflow&basis=net&by=total&store=notefeed&currency=USD")
+    assert [r["currency"] for r in rows] == ["USD"]
