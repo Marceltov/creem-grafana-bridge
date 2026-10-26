@@ -106,3 +106,33 @@ def test_missing_key_names_the_variable():
 def test_token_is_required():
     with pytest.raises(ValueError, match="BRIDGE_TOKEN"):
         Config.from_env({"CREEM_STORES": "notefeed", "CREEM_KEY_NOTEFEED": "k"})
+
+
+def test_stores_lists_the_configured_names(serve):
+    assert get(serve(stores) + "/stores") == (200, ["notefeed", "b"])
+
+
+def test_from_to_filter_rows_in_ms_and_relative(serve):
+    base = serve(stores)
+    _, rows = get(base + "/series?kind=revenue&basis=net")
+    assert [r["time"][:7] for r in rows] == ["2026-10", "2026-11"]
+    # epoch milliseconds as Grafana sends ${__from} and ${__to}; `to` is exclusive
+    nov = 1793487600000  # 2026-11-01T00:00+01:00
+    assert [r["time"][:7] for r in get(base + f"/series?kind=revenue&basis=net&from={nov}")[1]] == ["2026-11"]
+    assert [r["time"][:7] for r in get(base + f"/series?kind=revenue&basis=net&to={nov}")[1]] == ["2026-10"]
+    # relative to now (2026-10-26): this month, and the month after
+    assert [r["time"][:7] for r in get(base + "/series?kind=revenue&basis=net&from=now/M&to=now%2B1M/M")[1]] == ["2026-10"]
+    assert [r["time"][:7] for r in get(base + "/series?kind=revenue&basis=net&from=now%2B1M/M")[1]] == ["2026-11"]
+    assert get(base + "/series?kind=revenue&basis=net&from=yesterday")[0] == 400
+
+
+def test_by_total_and_store_sum_the_plans(serve):
+    def load(name, key, base_url):
+        return live() if name == "notefeed" else StoreData(name, [], [])
+
+    base = serve(load)
+    _, rows = get(base + "/series?kind=cashflow&basis=net&by=total")
+    assert rows == [{"time": "2026-10-01T00:00:00+02:00", "store": "all", "plan": "all", "currency": "EUR", "amount": -0.47}]
+    _, rows = get(base + "/series?kind=cashflow&basis=net&by=store")
+    assert [(r["store"], r["plan"]) for r in rows] == [("notefeed", "all")]
+    assert get(base + "/series?kind=cashflow&basis=net&by=colour")[0] == 400

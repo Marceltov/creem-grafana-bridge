@@ -22,6 +22,11 @@ corrects past months by itself. Python standard library only; it sends Creem not
 `basis=gross` is what customers paid (VAT included); `basis=net` is after VAT and Creem's fee. Months are calendar
 months in `TZ`. Currencies are never added together. No customer data appears in any answer.
 
+Optional: `by=plan` (default), `store` or `total` sums the plans (and stores) into `all`; `from` and `to` keep rows
+with `from` ≤ time < `to`, as epoch milliseconds (Grafana's `${__from}`, `${__to}`) or relative: `now`, `now-30d`,
+`now+12M`, `now/M` (the start of this month), `now+1M/M`. `GET /stores` lists the configured stores, for a Grafana
+variable.
+
 `GET /health` answers `ok` without a token. If any store cannot be read, `/series` answers 502 naming the store rather
 than totals that leave it out.
 
