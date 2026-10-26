@@ -1,0 +1,81 @@
+site_name: creem-grafana-bridge
+site_description: Revenue, cashflow, a forecast and estimated payouts of your Creem stores, as series for Grafana.
+site_url: https://marceltov.github.io/creem-grafana-bridge/
+repo_url: https://github.com/Marceltov/creem-grafana-bridge
+repo_name: Marceltov/creem-grafana-bridge
+edit_uri: edit/main/docs/
+copyright: Copyright &copy; 2026 Marcel Bruckner. Licensed under <a href="https://github.com/Marceltov/creem-grafana-bridge/blob/main/LICENSE">MIT</a>
+
+# Planning notes are kept in the repository, not on the site.
+exclude_docs: |
+  superpowers/
+
+nav:
+  - Home: index.md
+  - Getting started:
+      - Quick start: getting-started.md
+      - Grafana: grafana.md
+  - Reference:
+      - Configuration: configuration.md
+      - HTTP API: api.md
+  - Internals:
+      - How the numbers are made: numbers.md
+  - Project:
+      - Contributing: contributing.md
+
+theme:
+  name: material
+  logo: images/logo.svg
+  favicon: images/logo.svg
+  font:
+    text: Atkinson Hyperlegible Next
+    code: Atkinson Hyperlegible Mono
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.instant
+    - navigation.footer
+    - navigation.top
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
+    - content.action.edit
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      check_paths: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true

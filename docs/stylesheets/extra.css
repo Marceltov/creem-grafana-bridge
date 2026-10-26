@@ -1,0 +1,141 @@
+/* The dashboard's own colours: blue for links and the active page, orange for hover and the forecast.
+   The header stays quiet: paper-white in light mode, a blue-tinted charcoal in dark. */
+
+:root > * {
+  --cb-blue: #2a6fc4;
+  --cb-orange: #b9481b;
+  --cb-ink: #1e293b;
+  --cb-mist: #eef2f8;
+
+  --md-primary-fg-color: #ffffff;
+  --md-primary-fg-color--light: #ffffff;
+  --md-primary-fg-color--dark: #ffffff;
+  --md-primary-bg-color: var(--cb-ink);
+  --md-primary-bg-color--light: #475569;
+  --md-accent-fg-color: var(--cb-orange);
+  --md-typeset-a-color: var(--cb-blue);
+  --md-typeset-color: var(--cb-ink);
+  --md-footer-bg-color: #172033;
+  --md-footer-bg-color--dark: #10172a;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-hue: 220;
+  --cb-blue: #6aa7f0;
+  --cb-orange: #f08a5d;
+  --cb-ink: #e2e6ee;
+  --cb-mist: hsla(220, 15%, 18%, 1);
+
+  --md-primary-fg-color: hsla(220, 15%, 12%, 1);
+  --md-primary-fg-color--light: hsla(220, 15%, 12%, 1);
+  --md-primary-fg-color--dark: hsla(220, 15%, 12%, 1);
+  --md-primary-bg-color: var(--cb-ink);
+  --md-typeset-a-color: var(--cb-blue);
+  --md-typeset-color: hsla(220, 10%, 88%, 1);
+}
+
+/* Header: a hairline instead of a coloured bar. */
+.md-header {
+  border-bottom: 1px solid var(--md-default-fg-color--lightest);
+  box-shadow: none;
+}
+.md-header--shadow {
+  box-shadow: 0 1px 0 var(--md-default-fg-color--lightest);
+}
+.md-search__input,
+.md-search__input:hover {
+  background-color: var(--cb-mist);
+  color: var(--cb-ink);
+}
+.md-search__input::placeholder,
+.md-search__icon {
+  color: var(--md-default-fg-color--light);
+}
+
+/* The header already names the site; drop the repeat atop the sidebar. */
+@media screen and (min-width: 76.25em) {
+  .md-nav--primary > .md-nav__title {
+    display: none;
+  }
+}
+
+/* Reading rhythm: Atkinson reads best a touch larger and looser. */
+.md-typeset {
+  font-size: 0.82rem;
+  line-height: 1.65;
+}
+.md-typeset h1 {
+  color: var(--cb-ink);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+.md-typeset h2 {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.md-typeset a:focus-visible,
+.md-nav__link:focus-visible {
+  outline: 2px solid var(--cb-orange);
+  outline-offset: 2px;
+}
+
+.md-typeset img {
+  border-radius: 0.4rem;
+}
+
+/* Home page hero. */
+.cb-hero {
+  padding: 1.5rem 0 0.5rem;
+}
+.md-typeset .cb-hero h1 {
+  font-size: 2.4rem;
+  line-height: 1.1;
+  margin: 0.4em 0;
+  max-width: 14em;
+  text-wrap: balance;
+}
+.cb-hero__lead {
+  font-size: 1.05rem;
+  line-height: 1.55;
+  max-width: 36em;
+  color: var(--md-default-fg-color--light);
+}
+.md-typeset .cb-hero .md-button {
+  margin: 0.3rem 0.4rem 0.3rem 0;
+}
+.md-typeset .md-button {
+  color: var(--cb-blue);
+  border-color: currentColor;
+}
+.md-typeset .md-button--primary {
+  background-color: var(--cb-blue);
+  border-color: var(--cb-blue);
+  color: #ffffff;
+}
+[data-md-color-scheme="slate"] .md-typeset .md-button--primary {
+  color: #0d1626;
+}
+.md-typeset .md-button--primary:hover,
+.md-typeset .md-button--primary:focus {
+  background-color: var(--cb-orange);
+  border-color: var(--cb-orange);
+}
+@media screen and (max-width: 44.9375em) {
+  .md-typeset .cb-hero h1 {
+    font-size: 1.8rem;
+  }
+}
+
+/* Notes take the brand blue. */
+.md-typeset .admonition.note,
+.md-typeset details.note {
+  border-color: var(--cb-blue);
+}
+.md-typeset .note > .admonition-title,
+.md-typeset .note > summary {
+  background-color: color-mix(in srgb, var(--cb-blue) 10%, transparent);
+}
+.md-typeset .note > .admonition-title::before,
+.md-typeset .note > summary::before {
+  background-color: var(--cb-blue);
+}
