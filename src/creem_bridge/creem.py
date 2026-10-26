@@ -8,6 +8,8 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 PAGE_SIZE = 100
+# Creem answers urllib's default user agent with 403.
+USER_AGENT = "creem-grafana-bridge/0.1.0"
 
 Get = Callable[[str, dict[str, str]], dict]
 
@@ -42,7 +44,7 @@ def fetch_all(base_url: str, key: str, path: str, get: Get | None = None) -> lis
     items: list[dict] = []
     page: int | None = 1
     while page:
-        body = get(f"{base_url}{path}?{urlencode({'page_size': PAGE_SIZE, 'page_number': page})}", {"x-api-key": key, "accept": "application/json"})
+        body = get(f"{base_url}{path}?{urlencode({'page_size': PAGE_SIZE, 'page_number': page})}", {"x-api-key": key, "accept": "application/json", "user-agent": USER_AGENT})
         items += body["items"]
         page = body["pagination"]["next_page"]
     return items

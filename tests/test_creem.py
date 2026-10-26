@@ -41,3 +41,15 @@ def test_non_200_raises_creem_error():
     with pytest.raises(CreemError) as e:
         load_store("notefeed", "k", "https://x", get)
     assert e.value.status == 401
+
+
+def test_requests_name_themselves():
+    # Creem answers urllib's default user agent with 403.
+    seen = []
+
+    def get(url, headers):
+        seen.append(headers)
+        return {"items": [], "pagination": {"next_page": None}}
+
+    fetch_all("https://x", "k", "/v1/products/search", get)
+    assert seen[0]["user-agent"].startswith("creem-grafana-bridge/")
