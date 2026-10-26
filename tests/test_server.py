@@ -136,3 +136,18 @@ def test_by_total_and_store_sum_the_plans(serve):
     _, rows = get(base + "/series?kind=cashflow&basis=net&by=store")
     assert [(r["store"], r["plan"]) for r in rows] == [("notefeed", "all")]
     assert get(base + "/series?kind=cashflow&basis=net&by=colour")[0] == 400
+
+
+def test_per_month_sums_dates_into_months(serve):
+    def load(name, key, base_url):
+        return StoreData(name, [], [{
+            "id": "s", "status": "active", "canceled_at": None, "created_at": "2026-10-01T10:00:00Z",
+            "next_transaction_date": "2026-11-01T10:00:00Z", "discount": None,
+            "product": {"name": "weekly-ish", "price": 100, "currency": "EUR", "recurring_interval": "month", "recurring_interval_count": 1},
+            "last_transaction": {"amount_paid": 100, "tax_amount": 0}}])
+
+    base = serve(load)
+    _, rows = get(base + "/series?kind=forecast&basis=gross&by=total&per=month&to=now%2B3M/M")
+    # one subscription in each of two stores: two payments per month, in November and December
+    assert [(r["time"], r["amount"]) for r in rows] == [("2026-11-01T00:00:00+01:00", 2.0), ("2026-12-01T00:00:00+01:00", 2.0)]
+    assert get(base + "/series?kind=forecast&basis=gross&per=week")[0] == 400

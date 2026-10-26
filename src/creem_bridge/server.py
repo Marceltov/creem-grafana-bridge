@@ -24,6 +24,7 @@ log = logging.getLogger("creem_bridge")
 KINDS = ("revenue", "cashflow", "forecast", "payouts")
 BASES = ("gross", "net")
 GROUPS = ("plan", "store", "total")
+PERIODS = ("date", "month")
 RELATIVE = re.compile(r"now(?:([+-])(\d+)([dM]))?(/M)?")
 
 
@@ -43,12 +44,16 @@ def instant(value: str, now: datetime, tz: ZoneInfo) -> datetime:
     return month_start(t, tz) if to_month else t
 
 
-def regroup(rows: list[dict], by: str) -> list[dict]:
-    if by == "plan":
+def regroup(rows: list[dict], by: str, per: str, tz: ZoneInfo) -> list[dict]:
+    """Sums the plans (by store) or everything (total) into "all", and dates into their month (per month)."""
+    if by == "plan" and per == "date":
         return rows
     sums: dict[tuple, Decimal] = defaultdict(Decimal)
     for r in rows:
-        sums[(r["time"], r["store"] if by == "store" else "all", "all", r["currency"])] += r["amount"]
+        t = month_start(datetime.fromisoformat(r["time"]), tz).isoformat() if per == "month" else r["time"]
+        store = r["store"] if by != "total" else "all"
+        plan = r["plan"] if by == "plan" else "all"
+        sums[(t, store, plan, r["currency"])] += r["amount"]
     return [{"time": t, "store": s, "plan": p, "currency": c, "amount": a} for (t, s, p, c), a in sorted(sums.items())]
 
 
@@ -110,7 +115,7 @@ def make_server(cfg: Config, load: Callable[[str, str, str], StoreData] = load_s
             if url.path == "/stores":
                 return self.send(200, list(cfg.stores))
             q = {k: v[0] for k, v in parse_qs(url.query).items()}
-            kind, basis, by = q.get("kind"), q.get("basis", "gross"), q.get("by", "plan")
+            kind, basis, by, per = q.get("kind"), q.get("basis", "gross"), q.get("by", "plan"), q.get("per", "date")
             # Grafana's multi-value variable sends "All" as the list of every value, or as nothing.
             names = [n.strip() for n in q["store"].split(",")] if q.get("store") else list(cfg.stores)
             try:
@@ -118,15 +123,15 @@ def make_server(cfg: Config, load: Callable[[str, str, str], StoreData] = load_s
                 end = instant(q["to"], now(), cfg.tz) if q.get("to") else None
             except ValueError:
                 return self.send(400, {"error": "from and to are epoch milliseconds or now, now-30d, now+1M/M"})
-            if kind not in KINDS or basis not in BASES or by not in GROUPS or any(n not in cfg.stores for n in names):
-                return self.send(400, {"error": f"kind is one of {KINDS}, basis one of {BASES}, by one of {GROUPS}, store any of {list(cfg.stores)}"})
+            if kind not in KINDS or basis not in BASES or by not in GROUPS or per not in PERIODS or any(n not in cfg.stores for n in names):
+                return self.send(400, {"error": f"kind is one of {KINDS}, basis one of {BASES}, by one of {GROUPS}, per one of {PERIODS}, store any of {list(cfg.stores)}"})
             try:
                 rows = series(kind, basis, names)
             except StoreFailed as e:
                 return self.send(502, {"error": str(e)})
             rows = [r for r in rows if (start is None or datetime.fromisoformat(r["time"]) >= start)
                     and (end is None or datetime.fromisoformat(r["time"]) < end)]
-            self.send(200, [{**r, "amount": float(r["amount"])} for r in regroup(rows, by)])
+            self.send(200, [{**r, "amount": float(r["amount"])} for r in regroup(rows, by, per, cfg.tz)])
 
         def log_message(self, fmt, *args):
             # The request line only: no headers, so never the token.
