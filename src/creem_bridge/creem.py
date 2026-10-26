@@ -41,13 +41,15 @@ def _urlopen_get(url: str, headers: dict[str, str]) -> dict:
 
 def fetch_all(base_url: str, key: str, path: str, get: Get | None = None) -> list[dict]:
     get = get or _urlopen_get
-    items: list[dict] = []
+    # By id: Creem pages by number, so a payment arriving between two requests shifts the list and repeats one item.
+    items: dict[str, dict] = {}
     page: int | None = 1
     while page:
         body = get(f"{base_url}{path}?{urlencode({'page_size': PAGE_SIZE, 'page_number': page})}", {"x-api-key": key, "accept": "application/json", "user-agent": USER_AGENT})
-        items += body["items"]
+        for item in body["items"]:
+            items.setdefault(item["id"], item)
         page = body["pagination"]["next_page"]
-    return items
+    return list(items.values())
 
 
 def load_store(store: str, key: str, base_url: str, get: Get | None = None) -> StoreData:

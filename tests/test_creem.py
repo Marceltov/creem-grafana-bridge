@@ -28,10 +28,10 @@ def test_fetch_all_reads_every_page():
 def test_load_store_reads_transactions_and_subscriptions():
     def get(url, headers):
         kind = urlparse(url).path.split("/")[2]
-        return {"items": [{"kind": kind}], "pagination": {"next_page": None}}
+        return {"items": [{"id": kind}], "pagination": {"next_page": None}}
 
     data = load_store("notefeed", "k", "https://x", get)
-    assert data == StoreData("notefeed", [{"kind": "transactions"}], [{"kind": "subscriptions"}])
+    assert data == StoreData("notefeed", [{"id": "transactions"}], [{"id": "subscriptions"}])
 
 
 def test_non_200_raises_creem_error():
@@ -53,3 +53,12 @@ def test_requests_name_themselves():
 
     fetch_all("https://x", "k", "/v1/products/search", get)
     assert seen[0]["user-agent"].startswith("creem-grafana-bridge/")
+
+
+def test_a_transaction_on_two_pages_counts_once():
+    # Creem pages by number: a new payment arriving between two requests shifts the list by one.
+    pages = {
+        1: {"items": [{"id": "a"}, {"id": "b"}], "pagination": {"next_page": 2}},
+        2: {"items": [{"id": "b"}, {"id": "c"}], "pagination": {"next_page": None}},
+    }
+    assert [i["id"] for i in fetch_all("https://x", "k", "/v1/transactions/search", lambda u, h: pages[page_of(u)])] == ["a", "b", "c"]
