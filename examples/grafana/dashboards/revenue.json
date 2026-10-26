@@ -1,0 +1,1060 @@
+{
+  "uid": "revenue",
+  "title": "Revenue",
+  "tags": [
+    "creem",
+    "revenue"
+  ],
+  "timezone": "Europe/Berlin",
+  "editable": true,
+  "schemaVersion": 41,
+  "graphTooltip": 1,
+  "refresh": "",
+  "time": {
+    "from": "now-12M/M",
+    "to": "now+12M/M"
+  },
+  "description": "Revenue, cashflow, forecast and payouts of the Creem stores, from creem-grafana-bridge.",
+  "links": [
+    {
+      "title": "Creem dashboard",
+      "url": "https://www.creem.io/dashboard",
+      "type": "link",
+      "targetBlank": true,
+      "icon": "external link"
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "basis",
+        "label": "Amounts",
+        "type": "custom",
+        "query": "net : net,gross : gross",
+        "current": {
+          "text": "net",
+          "value": "net"
+        },
+        "options": [
+          {
+            "text": "net",
+            "value": "net",
+            "selected": true
+          },
+          {
+            "text": "gross",
+            "value": "gross",
+            "selected": false
+          }
+        ],
+        "description": "net: after VAT and Creem's fee. gross: what customers paid, VAT included."
+      },
+      {
+        "name": "store",
+        "label": "Store",
+        "type": "query",
+        "datasource": {
+          "type": "yesoreyeram-infinity-datasource",
+          "uid": "revenue"
+        },
+        "multi": true,
+        "includeAll": true,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "refresh": 1,
+        "query": {
+          "refId": "stores",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "revenue"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "url": "/stores",
+          "url_options": {
+            "method": "GET"
+          },
+          "root_selector": "",
+          "columns": [],
+          "filters": [],
+          "format": "table"
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Revenue, this month",
+      "description": "What this month's share of all payments comes to: a yearly payment counts about 1/12 per month. Basis as chosen above.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "revenue"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "revenue"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "format": "timeseries",
+          "url": "/series?kind=revenue&basis=$basis&store=${store:csv}&from=now/M&to=now%2B1M/M&by=total&currency=EUR",
+          "url_options": {
+            "method": "GET",
+            "data": ""
+          },
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "time",
+              "text": "time",
+              "type": "timestamp"
+            },
+            {
+              "selector": "amount",
+              "text": "amount",
+              "type": "number"
+            },
+            {
+              "selector": "store",
+              "text": "total",
+              "type": "string"
+            }
+          ],
+          "filters": []
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyEUR",
+          "decimals": 2,
+          "noValue": "\u20ac0.00",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "sum"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "graphMode": "none",
+        "colorMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Cash in, this month",
+      "description": "Payments made this month, less refunds. Basis as chosen above.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "revenue"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "revenue"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "format": "timeseries",
+          "url": "/series?kind=cashflow&basis=$basis&store=${store:csv}&from=now/M&to=now%2B1M/M&by=total&currency=EUR",
+          "url_options": {
+            "method": "GET",
+            "data": ""
+          },
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "time",
+              "text": "time",
+              "type": "timestamp"
+            },
+            {
+              "selector": "amount",
+              "text": "amount",
+              "type": "number"
+            },
+            {
+              "selector": "store",
+              "text": "total",
+              "type": "string"
+            }
+          ],
+          "filters": []
+        }
+      ],
+      "gridPos": {
+        "x": 4,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyEUR",
+          "decimals": 2,
+          "noValue": "\u20ac0.00",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "sum"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "graphMode": "none",
+        "colorMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Next 30 days",
+      "description": "Expected: what active subscriptions will pay in the next 30 days, after their discounts, if nobody cancels.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "revenue"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "revenue"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "format": "timeseries",
+          "url": "/series?kind=forecast&basis=$basis&store=${store:csv}&from=now&to=now%2B30d&by=total&currency=EUR",
+          "url_options": {
+            "method": "GET",
+            "data": ""
+          },
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "time",
+              "text": "time",
+              "type": "timestamp"
+            },
+            {
+              "selector": "amount",
+              "text": "amount",
+              "type": "number"
+            },
+            {
+              "selector": "store",
+              "text": "total",
+              "type": "string"
+            }
+          ],
+          "filters": []
+        }
+      ],
+      "gridPos": {
+        "x": 8,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyEUR",
+          "decimals": 2,
+          "noValue": "\u20ac0.00",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "sum"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "graphMode": "none",
+        "colorMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Next 90 days",
+      "description": "Expected from active subscriptions, as for 30 days.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "revenue"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "revenue"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "format": "timeseries",
+          "url": "/series?kind=forecast&basis=$basis&store=${store:csv}&from=now&to=now%2B90d&by=total&currency=EUR",
+          "url_options": {
+            "method": "GET",
+            "data": ""
+          },
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "time",
+              "text": "time",
+              "type": "timestamp"
+            },
+            {
+              "selector": "amount",
+              "text": "amount",
+              "type": "number"
+            },
+            {
+              "selector": "store",
+              "text": "total",
+              "type": "string"
+            }
+          ],
+          "filters": []
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyEUR",
+          "decimals": 2,
+          "noValue": "\u20ac0.00",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "sum"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "graphMode": "none",
+        "colorMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Next 12 months",
+      "description": "Expected from active subscriptions, as for 30 days.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "revenue"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "revenue"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "format": "timeseries",
+          "url": "/series?kind=forecast&basis=$basis&store=${store:csv}&from=now&to=now%2B12M&by=total&currency=EUR",
+          "url_options": {
+            "method": "GET",
+            "data": ""
+          },
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "time",
+              "text": "time",
+              "type": "timestamp"
+            },
+            {
+              "selector": "amount",
+              "text": "amount",
+              "type": "number"
+            },
+            {
+              "selector": "store",
+              "text": "total",
+              "type": "string"
+            }
+          ],
+          "filters": []
+        }
+      ],
+      "gridPos": {
+        "x": 16,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyEUR",
+          "decimals": 2,
+          "noValue": "\u20ac0.00",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "sum"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "graphMode": "none",
+        "colorMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Next payout",
+      "description": "The next payout to the bank, estimated from Creem's rules (the 1st and 15th, at least 50, money held 12 days, fee 7 or 1 %). Always after fees.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "revenue"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "revenue"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "format": "timeseries",
+          "url": "/series?kind=payouts&basis=net&store=${store:csv}&from=now&to=now%2B3M&by=total&currency=EUR",
+          "url_options": {
+            "method": "GET",
+            "data": ""
+          },
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "time",
+              "text": "time",
+              "type": "timestamp"
+            },
+            {
+              "selector": "amount",
+              "text": "amount",
+              "type": "number"
+            },
+            {
+              "selector": "store",
+              "text": "total",
+              "type": "string"
+            }
+          ],
+          "filters": []
+        }
+      ],
+      "gridPos": {
+        "x": 20,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyEUR",
+          "decimals": 2,
+          "noValue": "\u20ac0.00",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "firstNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "graphMode": "none",
+        "colorMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Revenue per month, by plan",
+      "description": "What payments pay for, spread over the months they cover. Refunds correct past months.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "revenue"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "revenue"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "format": "timeseries",
+          "url": "/series?kind=revenue&basis=$basis&store=${store:csv}&from=${__from}&to=${__to}&per=date&by=plan&currency=EUR",
+          "url_options": {
+            "method": "GET",
+            "data": ""
+          },
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "time",
+              "text": "time",
+              "type": "timestamp"
+            },
+            {
+              "selector": "amount",
+              "text": "amount",
+              "type": "number"
+            },
+            {
+              "selector": "plan",
+              "text": "plan",
+              "type": "string"
+            }
+          ],
+          "filters": []
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 12,
+        "h": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyEUR",
+          "decimals": 2,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "displayName": "${__field.labels.plan}",
+          "noValue": "No payments yet",
+          "custom": {
+            "drawStyle": "bars",
+            "barAlignment": 1,
+            "fillOpacity": 85,
+            "lineWidth": 0,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "axisSoftMin": 0,
+            "showPoints": "never",
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "notefeed.*month.*"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#3987e5"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "notefeed.*year.*"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#d95926"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "transformations": [
+        {
+          "id": "prepareTimeSeries",
+          "options": {
+            "format": "multi"
+          }
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Cashflow per month, by plan",
+      "description": "Payments in the month they were made, less refunds. Creem keeps no refund date: a refund counts in its payment's month.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "revenue"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "revenue"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "format": "timeseries",
+          "url": "/series?kind=cashflow&basis=$basis&store=${store:csv}&from=${__from}&to=${__to}&per=date&by=plan&currency=EUR",
+          "url_options": {
+            "method": "GET",
+            "data": ""
+          },
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "time",
+              "text": "time",
+              "type": "timestamp"
+            },
+            {
+              "selector": "amount",
+              "text": "amount",
+              "type": "number"
+            },
+            {
+              "selector": "plan",
+              "text": "plan",
+              "type": "string"
+            }
+          ],
+          "filters": []
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 12,
+        "h": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyEUR",
+          "decimals": 2,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "displayName": "${__field.labels.plan}",
+          "noValue": "No payments yet",
+          "custom": {
+            "drawStyle": "bars",
+            "barAlignment": 1,
+            "fillOpacity": 85,
+            "lineWidth": 0,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "axisSoftMin": 0,
+            "showPoints": "never",
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "notefeed.*month.*"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#3987e5"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "notefeed.*year.*"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#d95926"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "transformations": [
+        {
+          "id": "prepareTimeSeries",
+          "options": {
+            "format": "multi"
+          }
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Expected payments per month, by store",
+      "description": "What active subscriptions will pay in the coming months, after discounts, if nobody cancels.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "revenue"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "revenue"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "format": "timeseries",
+          "url": "/series?kind=forecast&basis=$basis&store=${store:csv}&from=${__from}&to=${__to}&per=month&by=store&currency=EUR",
+          "url_options": {
+            "method": "GET",
+            "data": ""
+          },
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "time",
+              "text": "time",
+              "type": "timestamp"
+            },
+            {
+              "selector": "amount",
+              "text": "amount",
+              "type": "number"
+            },
+            {
+              "selector": "store",
+              "text": "store",
+              "type": "string"
+            }
+          ],
+          "filters": []
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 13,
+        "w": 12,
+        "h": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyEUR",
+          "decimals": 2,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "displayName": "${__field.labels.store}",
+          "noValue": "No payments expected yet",
+          "custom": {
+            "drawStyle": "bars",
+            "barAlignment": 1,
+            "fillOpacity": 85,
+            "lineWidth": 0,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "axisSoftMin": 0,
+            "showPoints": "never",
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "notefeed"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#3987e5"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "transformations": [
+        {
+          "id": "prepareTimeSeries",
+          "options": {
+            "format": "multi"
+          }
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Payouts to the bank (estimate)",
+      "description": "Estimated from Creem's payout rules; the real ones are on each store's balance page in Creem. Always after fees.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "revenue"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "revenue"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "format": "timeseries",
+          "url": "/series?kind=payouts&basis=net&store=${store:csv}&from=${__from}&to=${__to}&per=date&by=store&currency=EUR",
+          "url_options": {
+            "method": "GET",
+            "data": ""
+          },
+          "root_selector": "",
+          "columns": [
+            {
+              "selector": "time",
+              "text": "time",
+              "type": "timestamp"
+            },
+            {
+              "selector": "amount",
+              "text": "amount",
+              "type": "number"
+            },
+            {
+              "selector": "store",
+              "text": "store",
+              "type": "string"
+            }
+          ],
+          "filters": []
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 13,
+        "w": 12,
+        "h": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyEUR",
+          "decimals": 2,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "displayName": "${__field.labels.store}",
+          "noValue": "No payouts yet",
+          "custom": {
+            "drawStyle": "bars",
+            "barAlignment": 1,
+            "fillOpacity": 85,
+            "lineWidth": 0,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "axisSoftMin": 0,
+            "showPoints": "never",
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "notefeed"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#3987e5"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "transformations": [
+        {
+          "id": "prepareTimeSeries",
+          "options": {
+            "format": "multi"
+          }
+        }
+      ]
+    }
+  ]
+}
