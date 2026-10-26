@@ -18,7 +18,7 @@ Needs `Authorization: Bearer <BRIDGE_TOKEN>`. Returns a JSON list of rows:
 | `by` | `plan` (default), `store`, `total` | sums plans (and stores) into `all` |
 | `per` | `date` (default), `month` | sums the forecast's and the payouts' dates into months |
 | `currency` | e.g. `EUR` | keeps one currency |
-| `from`, `to` | epoch ms, or `now`, `now-30d`, `now+12M`, `now/M`, `now+1M/M` | keeps rows with `from` ≤ time < `to`; `/M` is the start of that month |
+| `from`, `to` | epoch ms, or `now`, `now-30d`, `now+12M`, `now/M`, `now+1M/M`, `now/d` | keeps rows with `from` ≤ time < `to`; `/M` and `/d` round to the start of that month or day |
 
 | kind | one row per | |
 |---|---|---|
