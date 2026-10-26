@@ -86,7 +86,8 @@ the first (notefeed/notefeed#233). Creem's dashboard shows one store at a time, 
 
 ## Left to the builder (my calls, to check)
 
-- TypeScript on Node 24, `node:http` and `fetch`, vitest; image on ghcr.io via GitHub Actions, like noticebox.
+- Python 3.13, standard library only (`http.server`, `urllib`, `decimal` for exact money, `zoneinfo`), pytest, uv;
+  image on ghcr.io via GitHub Actions, like noticebox. No UI, so no web framework.
 - Fee and payout rules as configuration with today's values as defaults (`FEE_PERCENT=3.9`, `FEE_FIXED=0.40`,
   `PAYOUT_MIN=50`, `PAYOUT_HOLD_DAYS=12`, `PAYOUT_FEE_MIN=7`, `PAYOUT_FEE_PERCENT=1`), since Creem changes prices.
 - Creem's fee on a refunded payment counts as kept (not returned); configurable if the first refund statement says otherwise.
